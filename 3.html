@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>舒尔特方格练习</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-text-size-adjust: 100%;
+            -webkit-font-smoothing: antialiased;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+            height: -webkit-fill-available;
+            touch-action: manipulation;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 20px;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        .control-panel {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            transition: all 0.3s;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            -webkit-appearance: none;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        .control-btn:hover, .control-btn:active {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .control-btn.active {
+            background-color: #2c3e50;
+        }
+        
+        .control-btn.touch-active {
+            transform: scale(0.95);
+            opacity: 0.9;
+            transition: transform 0.1s, opacity 0.1s;
+        }
+        
+        .sound-toggle {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 10px;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        .main-container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .grid-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .timer-panel {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 15px;
+            gap: 20px;
+        }
+        
+        .timer-box {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+            flex: 1;
+            max-width: 200px;
+        }
+        
+        .timer-label {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .timer-display {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c3e50;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .next-number-display {
+            font-size: 20px;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        
+        table {
+            border-collapse: collapse;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            background-color: white;
+            -webkit-touch-callout: none;
+        }
+        
+        td {
+            width: 50px;
+            height: 50px;
+            border: 1px solid #e0e0e0;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        td:hover {
+            background-color: #f8f9fa;
+        }
+        
+        td.clicked {
+            background-color: #bdc3c7;
+            color: white;
+        }
+        
+        td.error {
+            background-color: #ffdddd !important;
+            animation: shake 0.5s;
+        }
+        
+        td.touch-active {
+            background-color: #e0e0e0 !important;
+            transform: scale(0.95);
+            transition: transform 0.2s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        
+        .history-panel {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            width: 280px;
+            height: fit-content;
+        }
+        
+        .history-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .history-tabs {
+            display: flex;
+            justify-content: space-around;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 15px;
+        }
+        
+        .history-tab {
+            padding: 8px 0;
+            cursor: pointer;
+            font-weight: 500;
+            color: #7f8c8d;
+            transition: all 0.3s;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .history-tab.active {
+            color: #3498db;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        .history-content {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed #eee;
+        }
+        
+        .history-time {
+            font-weight: 600;
+            color: #2c3e50;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .history-index {
+            color: #95a5a6;
+        }
+        
+        .no-history {
+            color: #95a5a6;
+            text-align: center;
+            padding: 30px 0;
+            font-style: italic;
+        }
+        
+        .best-record {
+            background-color: #f8f4e5;
+            border-left: 4px solid #f1c40f;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        
+        .best-record-title {
+            font-weight: bold;
+            color: #e67e22;
+            margin-bottom: 5px;
+        }
+        
+        .best-record-time {
+            font-weight: bold;
+            color: #2c3e50;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .instructions {
+            background-color: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .instructions h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .instructions ol {
+            padding-left: 25px;
+            line-height: 1.6;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .control-btn {
+                padding: 8px 15px;
+                font-size: 14px;
+                min-width: 60px;
+            }
+            
+            .control-panel {
+                gap: 8px;
+            }
+            
+            .sound-toggle {
+                width: 100%;
+                justify-content: center;
+                margin-top: 5px;
+            }
+            
+            .main-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+            }
+        
+            .history-panel {
+                width: 100%;
+                max-width: 400px;
+                margin-top: 20px;
+            }
+            
+            .timer-panel {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .timer-box {
+                max-width: 100%;
+                width: 100%;
+            }
+            
+            td {
+                width: 30px !important;
+                height: 30px !important;
+                font-size: 14px !important;
+            }
+            
+            .timer-display, .next-number-display {
+                font-size: 16px !important;
+            }
+            
+            .instructions {
+                padding: 15px;
+            }
+        }
+        
+        /* iPhone X及以上设备适配 */
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+            body {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>舒尔特方格练习</h1>
+    
+    <div class="control-panel">
+        <button id="btn3x3" class="control-btn">3×3</button>
+        <button id="btn5x5" class="control-btn active">5×5</button>
+        <button id="btn7x7" class="control-btn">7×7</button>
+        <button id="btn10x10" class="control-btn">10×10</button>
+        <button id="btnReset" class="control-btn">重置</button>
+        <div class="sound-toggle">
+            <input type="checkbox" id="soundToggle" checked>
+            <label for="soundToggle">音效</label>
+        </div>
+    </div>
+    
+    <div class="main-container">
+        <div class="grid-area">
+            <div class="timer-panel">
+                <div class="timer-box">
+                    <div class="timer-label">用时</div>
+                    <div class="timer-display" id="timeDisplay">00:00:00.000</div>
+                </div>
+                <div class="timer-box">
+                    <div class="timer-label">下一个数字</div>
+                    <div class="next-number-display" id="nextNumberDisplay">1</div>
+                </div>
+            </div>
+            <div id="gridContainer"></div>
+        </div>
+        
+        <div class="history-panel">
+            <div class="history-title">历史记录</div>
+            <div class="history-tabs">
+                <div class="history-tab" data-size="3">3×3</div>
+                <div class="history-tab active" data-size="5">5×5</div>
+                <div class="history-tab" data-size="7">7×7</div>
+                <div class="history-tab" data-size="10">10×10</div>
+            </div>
+            
+            <div id="bestRecord3x3" class="best-record" style="display:none">
+                <div class="best-record-title">3×3 最佳记录</div>
+                <div class="best-record-time" id="bestTime3x3">暂无记录</div>
+            </div>
+            <div id="bestRecord5x5" class="best-record" style="display:block">
+                <div class="best-record-title">5×5 最佳记录</div>
+                <div class="best-record-time" id="bestTime5x5">暂无记录</div>
+            </div>
+            <div id="bestRecord7x7" class="best-record" style="display:none">
+                <div class="best-record-title">7×7 最佳记录</div>
+                <div class="best-record-time" id="bestTime7x7">暂无记录</div>
+            </div>
+            <div id="bestRecord10x10" class="best-record" style="display:none">
+                <div class="best-record-title">10×10 最佳记录</div>
+                <div class="best-record-time" id="bestTime10x10">暂无记录</div>
+            </div>
+            
+            <div class="history-content">
+                <div id="historyList3x3" class="history-list" style="display:none"></div>
+                <div id="historyList5x5" class="history-list"></div>
+                <div id="historyList7x7" class="history-list" style="display:none"></div>
+                <div id="historyList10x10" class="history-list" style="display:none"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="instructions">
+        <h3>使用说明</h3>
+        <ol>
+            <li>选择方格大小 (3×3, 5×5, 7×7 或 10×10)</li>
+            <li>点击任意数字开始练习，计时器会自动启动</li>
+            <li>按照数字顺序依次点击方格 (从1开始)</li>
+            <li>点击正确的数字后，方格会变成灰色并有音效反馈</li>
+            <li>点击错误的数字会有提示音和视觉反馈</li>
+            <li>完成所有数字后，成绩会自动记录在历史中</li>
+            <li>系统会记录每种规格的最佳成绩(最短时间)</li>
+            <li>可以查看不同规格的历史记录(最近10次)</li>
+            <li>点击"重置"可以重新开始当前规格的练习</li>
+            <li>可以通过右上角开关控制音效</li>
+        </ol>
+        <p>舒尔特方格是训练注意力、视觉搜索能力和反应速度的有效工具，经常练习可以提高专注力和认知灵活性。</p>
+    </div>
+
+    <!-- 音频元素 -->
+    <audio id="clickSound" src="https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-beep-221.mp3" preload="auto"></audio>
+    <audio id="correctSound" src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3" preload="auto"></audio>
+    <audio id="errorSound" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3" preload="auto"></audio>
+    <audio id="completeSound" src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3" preload="auto"></audio>
+    <audio id="newRecordSound" src="https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3" preload="auto"></audio>
+
+    <script>
+        // 检测iOS设备
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        
+        // DOM元素
+        const gridContainer = document.getElementById('gridContainer');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const nextNumberDisplay = document.getElementById('nextNumberDisplay');
+        const btn3x3 = document.getElementById('btn3x3');
+        const btn5x5 = document.getElementById('btn5x5');
+        const btn7x7 = document.getElementById('btn7x7');
+        const btn10x10 = document.getElementById('btn10x10');
+        const btnReset = document.getElementById('btnReset');
+        const soundToggle = document.getElementById('soundToggle');
+        const historyTabs = document.querySelectorAll('.history-tab');
+        const historyLists = {
+            '3': document.getElementById('historyList3x3'),
+            '5': document.getElementById('historyList5x5'),
+            '7': document.getElementById('historyList7x7'),
+            '10': document.getElementById('historyList10x10')
+        };
+        const bestRecords = {
+            '3': document.getElementById('bestRecord3x3'),
+            '5': document.getElementById('bestRecord5x5'),
+            '7': document.getElementById('bestRecord7x7'),
+            '10': document.getElementById('bestRecord10x10')
+        };
+        const bestTimes = {
+            '3': document.getElementById('bestTime3x3'),
+            '5': document.getElementById('bestTime5x5'),
+            '7': document.getElementById('bestTime7x7'),
+            '10': document.getElementById('bestTime10x10')
+        };
+        const clickSound = document.getElementById('clickSound');
+        const correctSound = document.getElementById('correctSound');
+        const errorSound = document.getElementById('errorSound');
+        const completeSound = document.getElementById('completeSound');
+        const newRecordSound = document.getElementById('newRecordSound');
+        
+        // 游戏状态
+        let gridSize = 5;
+        let numbers = [];
+        let currentNumber = 1;
+        let startTime = 0;
+        let timerInterval = null;
+        let isGameStarted = false;
+        let errorCount = 0;
+        let historyRecords = {
+            '3': [],
+            '5': [],
+            '7': [],
+            '10': []
+        };
+        let bestScores = {
+            '3': null,
+            '5': null,
+            '7': null,
+            '10': null
+        };
+        
+        // 初始化
+        function init() {
+            // 按钮事件监听
+            btn3x3.addEventListener('click', () => {
+                gridSize = 3;
+                createGrid(3);
+                switchHistoryTab('3');
+            });
+            
+            btn5x5.addEventListener('click', () => {
+                gridSize = 5;
+                createGrid(5);
+                switchHistoryTab('5');
+            });
+            
+            btn7x7.addEventListener('click', () => {
+                gridSize = 7;
+                createGrid(7);
+                switchHistoryTab('7');
+            });
+            
+            btn10x10.addEventListener('click', () => {
+                gridSize = 10;
+                createGrid(10);
+                switchHistoryTab('10');
+            });
+            
+            btnReset.addEventListener('click', resetGame);
+            
+            // iOS设备添加全局触摸处理
+            if (isIOS) {
+                document.addEventListener('touchstart', handleGlobalTouch, { passive: false });
+            }
+            
+            // 历史记录标签切换
+            historyTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const size = tab.dataset.size;
+                    switchHistoryTab(size);
+                });
+            });
+            
+            // 从本地存储加载历史记录
+            loadHistory();
+            createGrid(5);
+            updateNextNumberDisplay();
+            
+            // 解决Safari 100vh问题
+            function setRealVH() {
+                const vh = window.innerHeight * 0.01;
+                document.documentElement.style.setProperty('--vh', `${vh}px`);
+            }
+            
+            setRealVH();
+            window.addEventListener('resize', setRealVH);
+            
+            if (isIOS) {
+                window.visualViewport.addEventListener('resize', setRealVH);
+            }
+        }
+        
+        // iOS全局触摸处理
+        function handleGlobalTouch(e) {
+            // 只处理控制按钮的触摸
+            if (e.target.classList.contains('control-btn')) {
+                e.preventDefault();
+                e.target.classList.add('touch-active');
+                setTimeout(() => {
+                    e.target.classList.remove('touch-active');
+                    e.target.click();
+                }, 100);
+            }
+        }
+        
+        // 切换历史记录标签
+        function switchHistoryTab(size) {
+            gridSize = parseInt(size);
+            historyTabs.forEach(t => t.classList.remove('active'));
+            document.querySelector(`.history-tab[data-size="${size}"]`).classList.add('active');
+            
+            Object.keys(historyLists).forEach(key => {
+                historyLists[key].style.display = key === size ? 'block' : 'none';
+                bestRecords[key].style.display = key === size ? 'block' : 'none';
+            });
+            
+            // 更新按钮状态
+            updateActiveButtonForSize(size);
+        }
+        
+        // 根据尺寸更新活动按钮
+        function updateActiveButtonForSize(size) {
+            [btn3x3, btn5x5, btn7x7, btn10x10].forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            switch(size) {
+                case '3':
+                    btn3x3.classList.add('active');
+                    break;
+                case '5':
+                    btn5x5.classList.add('active');
+                    break;
+                case '7':
+                    btn7x7.classList.add('active');
+                    break;
+                case '10':
+                    btn10x10.classList.add('active');
+                    break;
+            }
+        }
+        
+        // 创建方格
+        function createGrid(size) {
+            resetGame();
+            gridSize = size;
+            
+            // 生成数字数组
+            numbers = Array.from({length: size * size}, (_, i) => i + 1);
+            
+            // 打乱数字顺序
+            shuffleArray(numbers);
+            
+            // 创建表格
+            const table = document.createElement('table');
+            
+            // 根据尺寸调整单元格大小
+            const cellSize = size === 3 ? 60 : size === 5 ? 50 : size === 7 ? 40 : 30;
+            const fontSize = size === 3 ? 24 : size === 5 ? 20 : size === 7 ? 18 : 16;
+            
+            for (let i = 0; i < size; i++) {
+                const row = document.createElement('tr');
+                
+                for (let j = 0; j < size; j++) {
+                    const cell = document.createElement('td');
+                    const index = i * size + j;
+                    cell.textContent = numbers[index];
+                    cell.dataset.value = numbers[index];
+                    cell.style.width = `${cellSize}px`;
+                    cell.style.height = `${cellSize}px`;
+                    cell.style.fontSize = `${fontSize}px`;
+                    
+                    // iOS设备使用触摸事件
+                    if (isIOS) {
+                        cell.addEventListener('touchstart', function(e) {
+                            e.preventDefault();
+                            this.classList.add('touch-active');
+                            setTimeout(() => {
+                                this.classList.remove('touch-active');
+                                this.click();
+                            }, 100);
+                        }, { passive: false });
+                    }
+                    cell.addEventListener('click', handleCellClick);
+                    
+                    row.appendChild(cell);
+                }
+                
+                table.appendChild(row);
+            }
+            
+            gridContainer.innerHTML = '';
+            gridContainer.appendChild(table);
+            updateNextNumberDisplay();
+        }
+        
+        // 处理单元格点击
+        function handleCellClick(e) {
+            const cell = e.target;
+            const value = parseInt(cell.dataset.value);
+            
+            // 播放基本点击音效
+            playSound(clickSound);
+            
+            if (!isGameStarted) {
+                // 第一次点击开始游戏
+                isGameStarted = true;
+                startTime = performance.now();
+                timerInterval = setInterval(updateTimer, 10);
+            }
+            
+            if (value === currentNumber) {
+                // 播放正确音效
+                playSound(correctSound);
+                
+                cell.classList.add('clicked');
+                currentNumber++;
+                updateNextNumberDisplay();
+                
+                // 检查是否完成
+                if (currentNumber > gridSize * gridSize) {
+                    const endTime = performance.now();
+                    const elapsedTime = endTime - startTime;
+                    clearInterval(timerInterval);
+                    
+                    // 播放完成音效
+                    playSound(completeSound);
+                    
+                    // 添加到历史记录
+                    addToHistory(gridSize, elapsedTime);
+                    
+                    setTimeout(() => {
+                        alert(`恭喜完成 ${gridSize}×${gridSize} 方格!\n用时: ${formatTime(elapsedTime)}\n错误次数: ${errorCount}`);
+                    }, 100);
+                }
+            } else if (value > currentNumber) {
+                // 播放错误音效
+                playSound(errorSound);
+                errorCount++;
+                
+                // 添加视觉反馈
+                cell.classList.add('error');
+                setTimeout(() => {
+                    cell.classList.remove('error');
+                }, 500);
+            }
+        }
+        
+        // 添加到历史记录
+        function addToHistory(size, time) {
+            const record = {
+                time: time,
+                date: new Date(),
+                isBest: false,
+                errors: errorCount
+            };
+            
+            // 确保size是字符串形式
+            const sizeKey = size.toString();
+            
+            // 检查是否为最佳记录
+            if (!bestScores[sizeKey] || time < bestScores[sizeKey].time) {
+                record.isBest = true;
+                
+                if (bestScores[sizeKey]) {
+                    const oldBestIndex = historyRecords[sizeKey].findIndex(r => r.isBest);
+                    if (oldBestIndex !== -1) {
+                        historyRecords[sizeKey][oldBestIndex].isBest = false;
+                    }
+                }
+                
+                bestScores[sizeKey] = {...record};
+                updateBestRecordDisplay(sizeKey);
+                playSound(newRecordSound);
+            }
+            
+            historyRecords[sizeKey].unshift(record);
+            
+            if (historyRecords[sizeKey].length > 10) {
+                historyRecords[sizeKey] = historyRecords[sizeKey].slice(0, 10);
+            }
+            
+            saveHistory();
+            updateHistoryDisplay(sizeKey);
+        }
+        
+        // 更新最佳记录显示
+        function updateBestRecordDisplay(size) {
+            if (bestScores[size]) {
+                bestTimes[size].textContent = `${formatTime(bestScores[size].time)} (${bestScores[size].errors}次错误)`;
+            } else {
+                bestTimes[size].textContent = "暂无记录";
+            }
+        }
+        
+        // 更新历史记录显示
+        function updateHistoryDisplay(size) {
+            const list = historyLists[size];
+            const records = historyRecords[size];
+            
+            if (records.length === 0) {
+                list.innerHTML = '<div class="no-history">暂无记录</div>';
+                return;
+            }
+            
+            list.innerHTML = '';
+            records.forEach((record, index) => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                if (record.isBest) {
+                    item.style.fontWeight = 'bold';
+                    item.style.color = '#e67e22';
+                }
+                item.innerHTML = `
+                    <span class="history-index">#${index + 1}</span>
+                    <span class="history-time">${formatTime(record.time)} (${record.errors}次错误)</span>
+                `;
+                list.appendChild(item);
+            });
+        }
+        
+        // 保存历史记录到本地存储
+        function saveHistory() {
+            localStorage.setItem('schulteGridHistory', JSON.stringify(historyRecords));
+            localStorage.setItem('schulteGridBest', JSON.stringify(bestScores));
+        }
+        
+        // 从本地存储加载历史记录
+        function loadHistory() {
+            const savedHistory = localStorage.getItem('schulteGridHistory');
+            const savedBest = localStorage.getItem('schulteGridBest');
+            
+            if (savedHistory) {
+                historyRecords = JSON.parse(savedHistory);
+            }
+            
+            if (savedBest) {
+                bestScores = JSON.parse(savedBest);
+            }
+            
+            // 初始化显示
+            Object.keys(historyRecords).forEach(size => {
+                updateHistoryDisplay(size);
+                updateBestRecordDisplay(size);
+            });
+        }
+        
+        // 播放音效
+        function playSound(soundElement) {
+            if (!soundToggle.checked) return;
+            
+            soundElement.currentTime = 0;
+            soundElement.play().catch(e => {
+                console.log("音效播放被阻止:", e);
+            });
+        }
+        
+        // 更新计时器显示
+        function updateTimer() {
+            const currentTime = performance.now();
+            const elapsedTime = currentTime - startTime;
+            timeDisplay.textContent = formatTime(elapsedTime);
+        }
+        
+        // 格式化时间为 HH:MM:SS.mmm
+        function formatTime(milliseconds) {
+            let ms = Math.floor(milliseconds % 1000);
+            let totalSeconds = Math.floor(milliseconds / 1000);
+            let seconds = totalSeconds % 60;
+            let totalMinutes = Math.floor(totalSeconds / 60);
+            let minutes = totalMinutes % 60;
+            let hours = Math.floor(totalMinutes / 60);
+            
+            return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}.${pad(ms, 3)}`;
+        }
+        
+        // 补零函数
+        function pad(num, length = 2) {
+            return num.toString().padStart(length, '0');
+        }
+        
+        // 更新下一个数字显示
+        function updateNextNumberDisplay() {
+            if (currentNumber <= gridSize * gridSize) {
+                nextNumberDisplay.textContent = currentNumber;
+            } else {
+                nextNumberDisplay.textContent = "完成!";
+            }
+        }
+        
+        // 重置游戏
+        function resetGame() {
+            clearInterval(timerInterval);
+            isGameStarted = false;
+            currentNumber = 1;
+            startTime = 0;
+            errorCount = 0;
+            timeDisplay.textContent = '00:00:00.000';
+            updateNextNumberDisplay();
+            
+            // 重置所有单元格样式
+            const cells = document.querySelectorAll('td');
+            cells.forEach(cell => {
+                cell.classList.remove('clicked');
+                cell.classList.remove('error');
+                cell.classList.remove('touch-active');
+            });
+        }
+        
+        // 打乱数组顺序
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+        
+        // 启动应用
+        init();
+    </script>
+</body>
+</html>
